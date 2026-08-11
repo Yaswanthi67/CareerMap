@@ -1,0 +1,22 @@
+skill,job_count,demand_percentage
+Artificial Intelligence,4262,12.68
+Machine Learning,3401,10.12
+Python,1845,5.49
+Azure,802,2.39
+SQL,717,2.13
+AWS,654,1.95
+GCP,505,1.5
+Java,419,1.25
+R,239,0.71
+Spark,229,0.68
+Power BI,224,0.67
+Excel,199,0.59
+Tableau,131,0.39
+Git,107,0.32
+Deep Learning,88,0.26
+Hadoop,83,0.25
+TensorFlow,77,0.23
+PyTorch,76,0.23
+Kubernetes,45,0.13
+C++,42,0.12
+Docker,32,0.1
