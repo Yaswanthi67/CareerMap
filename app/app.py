@@ -11,7 +11,7 @@ import plotly.express as px
 # ============================================================
 
 st.set_page_config(
-    page_title="Career Intelligence System",
+    page_title="Career Map",
     page_icon="🎯",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -326,7 +326,7 @@ jobs["salary_numeric"] = pd.to_numeric(
 
 st.markdown(
     '<div class="main-title">'
-    '🎯 Career Intelligence System'
+    '🎯 Career Map'
     '</div>',
     unsafe_allow_html=True
 )
@@ -348,7 +348,7 @@ st.divider()
 # ============================================================
 
 st.sidebar.title(
-    "🎯 Career Intelligence"
+    "🎯 Career Map"
 )
 
 st.sidebar.caption(
@@ -373,7 +373,7 @@ st.sidebar.divider()
 
 st.sidebar.info(
     "Data source: "
-    "KDS + JOBA + Indian job datasets"
+    "DS Jobs + Job Market+ Indian Job datasets"
 )
 
 
@@ -1412,6 +1412,7 @@ elif page == "🔎 Job Explorer":
 st.divider()
 
 st.caption(
-    "🎯 Career Intelligence System • "
+    "🎯 Career Map • "
     "Python + Pandas + Scikit-learn + Streamlit"
 )
+
