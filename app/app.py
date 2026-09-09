@@ -958,12 +958,11 @@ elif page == "🎯 Career Recommender":
             # Extract skills
             # ------------------------------------------------
             text = " ".join(
-                  matching["skills_raw"].fillna("").astype(str)
-                   + " "
-                  + matching["description"].fillna("").astype(str)
+               matching["skills_raw"].fillna("").astype(str) + " " +
+               matching["description"].fillna("").astype(str) + " " +
+               matching["job_title"].fillna("").astype(str)
             ).lower()
-
-
+           
             skill_patterns = {
 
                 "Python": r"\bpython\b",
