@@ -64,7 +64,6 @@ def clean_text(value):
 # =========================================================
 # KDS
 # =========================================================
-
 def process_kds():
 
     df = read_csv_safe(f"{RAW_DIR}/kds.csv")
@@ -94,10 +93,17 @@ def process_kds():
         ["salary", "salary_estimate", "estimated_salary"]
     )
 
+    skills_col = find_column(
+        df,
+        ["skills", "required_skills", "skill", "key_skills"]
+    )
+
     description_col = find_column(
         df,
         ["description", "job_description"]
     )
+
+    print(f"KDS -> skills_col matched: {skills_col}")
 
     result = pd.DataFrame()
 
@@ -117,6 +123,10 @@ def process_kds():
         df[salary_col] if salary_col else ""
     )
 
+    result["skills_raw"] = (
+        df[skills_col] if skills_col else ""
+    )
+
     result["description"] = (
         df[description_col] if description_col else ""
     )
@@ -124,7 +134,6 @@ def process_kds():
     result["source"] = "KDS"
 
     return result
-
 
 # =========================================================
 # JOBA
