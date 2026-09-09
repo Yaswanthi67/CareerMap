@@ -1387,9 +1387,6 @@ elif page == "🔎 Job Explorer":
             "job_title",
             "company",
             "location",
-            "experience",
-            "salary_raw",
-            "skills_raw",
             "source"
         ]
         if column in filtered_jobs.columns
