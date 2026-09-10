@@ -1066,9 +1066,9 @@ elif page == "🎯 Career Skill Recommender":
         total_matches = len(matching)
 
         min_threshold = max(
-            1,
+            5,
             min(
-            int(jobs_with_text * 0.05),
+            int(jobs_with_text * 0.08),
              50
             )
         )
