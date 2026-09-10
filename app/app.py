@@ -904,7 +904,6 @@ elif page == "💼 Job Market":
             "No numeric salary data available."
         )
 
-
 # ============================================================
 # PAGE 4 — CAREER RECOMMENDER
 # ============================================================
@@ -915,255 +914,781 @@ elif page == "🎯 Career Skill Recommender":
         "🎯 Career Skill Recommender"
     )
 
-
     st.write(
         "Enter a target career and discover the skills "
         "frequently associated with that role."
     )
 
+    # --------------------------------------------------------
+    # ROLE INPUT
+    # --------------------------------------------------------
 
     target_role = st.text_input(
         "Target Job Role",
-        placeholder="Example: Data Analyst"
+        placeholder="Example: Java Developer"
     )
-
 
     if target_role:
 
-        matching = jobs[
-            jobs["job_title"].str.contains(
-                target_role,
-                case=False,
-                na=False
-            )
-        ]
+        # ----------------------------------------------------
+        # ROLE-SPECIFIC SEARCH TERMS
+        # ----------------------------------------------------
 
+        role_lower = target_role.lower().strip()
+
+        role_aliases = {
+
+            "java developer": [
+                "java developer",
+                "java",
+                "spring boot developer",
+                "spring developer",
+                "java backend developer",
+                "java software developer",
+                "java engineer",
+                "backend java"
+            ],
+
+            "python developer": [
+                "python developer",
+                "python",
+                "django developer",
+                "flask developer",
+                "fastapi developer"
+            ],
+
+            "data analyst": [
+                "data analyst",
+                "business analyst",
+                "reporting analyst",
+                "data analytics"
+            ],
+
+            "data engineer": [
+                "data engineer",
+                "big data engineer",
+                "etl developer",
+                "data platform engineer"
+            ],
+
+            "full stack developer": [
+                "full stack developer",
+                "full-stack developer",
+                "full stack",
+                "web developer"
+            ],
+
+            "backend developer": [
+                "backend developer",
+                "back-end developer",
+                "backend engineer",
+                "server-side developer"
+            ],
+
+            "frontend developer": [
+                "frontend developer",
+                "front-end developer",
+                "frontend engineer",
+                "web developer"
+            ],
+
+            "ai/ml engineer": [
+                "ai/ml engineer",
+                "ai engineer",
+                "ml engineer",
+                "machine learning engineer",
+                "artificial intelligence engineer"
+            ],
+
+            "devops engineer": [
+                "devops engineer",
+                "devops",
+                "cloud engineer",
+                "site reliability engineer"
+            ]
+        }
+
+        # ----------------------------------------------------
+        # FIND BEST ROLE ALIASES
+        # ----------------------------------------------------
+
+        search_terms = [target_role]
+
+        for role_name, aliases in role_aliases.items():
+
+            if role_lower == role_name or role_lower in aliases:
+
+                search_terms = aliases
+                break
+
+        # ----------------------------------------------------
+        # MATCH JOB TITLES
+        # ----------------------------------------------------
+
+        matching_masks = []
+
+        for term in search_terms:
+
+            if term.strip():
+
+                matching_masks.append(
+                    jobs["job_title"].str.contains(
+                        re.escape(term),
+                        case=False,
+                        na=False
+                    )
+                )
+
+        if matching_masks:
+
+            role_mask = matching_masks[0]
+
+            for mask in matching_masks[1:]:
+                role_mask = role_mask | mask
+
+            matching = jobs[role_mask].copy()
+
+        else:
+
+            matching = jobs[
+                jobs["job_title"].str.contains(
+                    re.escape(target_role),
+                    case=False,
+                    na=False
+                )
+            ].copy()
+
+        # ----------------------------------------------------
+        # NO JOBS FOUND
+        # ----------------------------------------------------
 
         if len(matching) == 0:
 
             st.warning(
                 "No matching jobs found. "
                 "Try a broader role such as "
-                "'Data', 'Analyst', 'Engineer', etc."
+                "'Java', 'Python', 'Data Analyst', "
+                "'Backend Developer', etc."
             )
 
         else:
-                     st.success(
-            f"{len(matching):,} matching job records found."
-        )
 
-
-        if len(matching) > 150:
-
-            st.warning(
-                "⚠️ This is a very broad search covering many "
-                "different types of roles, so skill recommendations "
-                "may be too general. Try a more specific title like "
-                "'Backend Developer', 'Data Analyst', or "
-                "'DevOps Engineer' for focused results."
+            st.success(
+                f"{len(matching):,} matching job records found."
             )
 
+            # ------------------------------------------------
+            # COMBINE TEXT FOR SKILL DETECTION
+            # ------------------------------------------------
 
-        # ------------------------------------------------
-        # Extract skills
-        # ------------------------------------------------
+            combined_text_series = (
+                matching["skills_raw"].fillna("").astype(str)
+                + " "
+                + matching["description"].fillna("").astype(str)
+                + " "
+                + matching["job_title"].fillna("").astype(str)
+            ).str.lower()
 
-        combined_text_series = (
-            matching["skills_raw"].fillna("").astype(str) + " " +
-            matching["description"].fillna("").astype(str) + " " +
-            matching["job_title"].fillna("").astype(str)
-        ).str.lower()
+            total_matches = len(matching)
 
+            jobs_with_text = (
+                combined_text_series.str.strip().str.len() > 0
+            ).sum()
 
-        skill_categories = {
+            # ------------------------------------------------
+            # SKILL CATEGORIES
+            # ------------------------------------------------
 
-            "Languages": {
-                "Python": r"\bpython\b",
-                "Java": r"\bjava\b",
-                "JavaScript": r"\bjavascript\b|\bjs\b",
-                "TypeScript": r"\btypescript\b",
-                "C++": r"c\+\+",
-                "C#": r"c#",
-                "PHP": r"\bphp\b",
-            },
+            skill_categories = {
 
-            "Frameworks": {
-                "Spring Boot": r"spring\s*boot|\bspring\b",
-                "React": r"\breact\b|reactjs",
-                "Node.js": r"node\.?js",
-                "Angular": r"\bangular\b",
-                "Vue.js": r"vue\.?js|\bvuejs\b",
-                "Express.js": r"express\.?js|\bexpressjs\b",
-                "Next.js": r"next\.?js|\bnextjs\b",
-                "Laravel": r"\blaravel\b",
-                "HTML": r"\bhtml\b",
-                "CSS": r"\bcss\b",
-                "REST API": r"rest\s*api|restful",
-                "GraphQL": r"\bgraphql\b",
-                "Redux": r"\bredux\b",
-                "Bootstrap": r"\bbootstrap\b",
-                "Microservices": r"microservices?",
-            },
+                "Languages": {
 
-            "Data & Databases": {
-                "SQL": r"\bsql\b",
-                "MySQL": r"\bmysql\b",
-                "PostgreSQL": r"\bpostgresql\b|\bpostgres\b",
-                "MongoDB": r"\bmongodb\b|\bmongo\b",
-                "Excel": r"\bexcel\b",
-                "Power BI": r"power\s*bi|powerbi",
-                "Tableau": r"\btableau\b",
-                "Looker": r"\blooker\b",
-                "VBA": r"\bvba\b",
-                "Google Analytics": r"google analytics",
-            },
+                    "Java": r"\bjava\b",
 
-            "AI / ML": {
-                "Machine Learning": r"machine learning",
-                "Deep Learning": r"deep learning",
-                "Artificial Intelligence": r"artificial intelligence",
-                "TensorFlow": r"tensorflow",
-                "PyTorch": r"pytorch",
-                "Keras": r"\bkeras\b",
-                "Scikit-learn": r"scikit[-\s]?learn|\bsklearn\b",
-                "NLP": r"\bnlp\b|natural language processing",
-                "Computer Vision": r"computer vision",
-            },
+                    "Python": r"\bpython\b",
 
-            "Statistics & Analytics": {
-                "Statistics": r"\bstatistics\b|\bstatistical\b",
-                "Data Visualization": r"data visuali[sz]ation",
-                "A/B Testing": r"a/b\s*testing|ab\s*testing",
-                "Pandas": r"\bpandas\b",
-                "NumPy": r"\bnumpy\b",
-                "SAS": r"\bsas\b",
-                "Big Data": r"big data",
-                "Hadoop": r"\bhadoop\b",
-                "Jupyter": r"\bjupyter\b",
-            },
+                    "JavaScript": (
+                        r"\bjavascript\b|\bjs\b"
+                    ),
 
-            "Cloud & DevOps": {
-                "AWS": r"\baws\b",
-                "Azure": r"\bazure\b",
-                "GCP": r"\bgcp\b|google cloud",
-                "Docker": r"docker",
-                "Kubernetes": r"kubernetes",
-                "Jenkins": r"\bjenkins\b",
-                "CI/CD": r"ci\s*/\s*cd|continuous integration|continuous deployment",
-                "Terraform": r"\bterraform\b",
-                "Ansible": r"\bansible\b",
-                "Linux": r"\blinux\b|\bunix\b",
-                "Spark": r"\bspark\b",
-                "Git": r"\bgit\b|github",
-            },
+                    "TypeScript": (
+                        r"\btypescript\b"
+                    ),
 
-        }
+                    "C++": r"c\+\+",
 
-        has_text_mask = combined_text_series.str.strip().str.len() > 0
+                    "C#": r"c#",
 
-        jobs_with_text = has_text_mask.sum()
+                    "PHP": r"\bphp\b"
+                },
 
-        total_matches = len(matching)
+                "Frameworks": {
 
-        min_threshold = max(
-            5,
-            min(
-            int(jobs_with_text * 0.08),
-             50
+                    "Spring Boot": (
+                        r"spring\s*boot|\bspring\b"
+                    ),
+
+                    "React": (
+                        r"\breact\b|reactjs"
+                    ),
+
+                    "Node.js": (
+                        r"node\.?js"
+                    ),
+
+                    "Angular": (
+                        r"\bangular\b"
+                    ),
+
+                    "Vue.js": (
+                        r"vue\.?js|\bvuejs\b"
+                    ),
+
+                    "Express.js": (
+                        r"express\.?js|\bexpressjs\b"
+                    ),
+
+                    "Next.js": (
+                        r"next\.?js|\bnextjs\b"
+                    ),
+
+                    "Laravel": (
+                        r"\blaravel\b"
+                    ),
+
+                    "HTML": (
+                        r"\bhtml\b"
+                    ),
+
+                    "CSS": (
+                        r"\bcss\b"
+                    ),
+
+                    "REST API": (
+                        r"rest\s*api|restful"
+                    ),
+
+                    "GraphQL": (
+                        r"\bgraphql\b"
+                    ),
+
+                    "Redux": (
+                        r"\bredux\b"
+                    ),
+
+                    "Bootstrap": (
+                        r"\bbootstrap\b"
+                    ),
+
+                    "Microservices": (
+                        r"microservices?"
+                    )
+                },
+
+                "Data & Databases": {
+
+                    "SQL": (
+                        r"\bsql\b"
+                    ),
+
+                    "MySQL": (
+                        r"\bmysql\b"
+                    ),
+
+                    "PostgreSQL": (
+                        r"\bpostgresql\b|\bpostgres\b"
+                    ),
+
+                    "MongoDB": (
+                        r"\bmongodb\b|\bmongo\b"
+                    ),
+
+                    "Excel": (
+                        r"\bexcel\b"
+                    ),
+
+                    "Power BI": (
+                        r"power\s*bi|powerbi"
+                    ),
+
+                    "Tableau": (
+                        r"\btableau\b"
+                    ),
+
+                    "Looker": (
+                        r"\blooker\b"
+                    ),
+
+                    "VBA": (
+                        r"\bvba\b"
+                    ),
+
+                    "Google Analytics": (
+                        r"google analytics"
+                    )
+                },
+
+                "AI / ML": {
+
+                    "Machine Learning": (
+                        r"machine learning"
+                    ),
+
+                    "Deep Learning": (
+                        r"deep learning"
+                    ),
+
+                    "Artificial Intelligence": (
+                        r"artificial intelligence"
+                    ),
+
+                    "TensorFlow": (
+                        r"tensorflow"
+                    ),
+
+                    "PyTorch": (
+                        r"pytorch"
+                    ),
+
+                    "Keras": (
+                        r"\bkeras\b"
+                    ),
+
+                    "Scikit-learn": (
+                        r"scikit[-\s]?learn|\bsklearn\b"
+                    ),
+
+                    "NLP": (
+                        r"\bnlp\b|natural language processing"
+                    ),
+
+                    "Computer Vision": (
+                        r"computer vision"
+                    )
+                },
+
+                "Statistics & Analytics": {
+
+                    "Statistics": (
+                        r"\bstatistics\b|\bstatistical\b"
+                    ),
+
+                    "Data Visualization": (
+                        r"data visuali[sz]ation"
+                    ),
+
+                    "A/B Testing": (
+                        r"a/b\s*testing|ab\s*testing"
+                    ),
+
+                    "Pandas": (
+                        r"\bpandas\b"
+                    ),
+
+                    "NumPy": (
+                        r"\bnumpy\b"
+                    ),
+
+                    "SAS": (
+                        r"\bsas\b"
+                    ),
+
+                    "Big Data": (
+                        r"big data"
+                    ),
+
+                    "Hadoop": (
+                        r"\bhadoop\b"
+                    ),
+
+                    "Jupyter": (
+                        r"\bjupyter\b"
+                    )
+                },
+
+                "Cloud & DevOps": {
+
+                    "AWS": (
+                        r"\baws\b"
+                    ),
+
+                    "Azure": (
+                        r"\bazure\b"
+                    ),
+
+                    "GCP": (
+                        r"\bgcp\b|google cloud"
+                    ),
+
+                    "Docker": (
+                        r"docker"
+                    ),
+
+                    "Kubernetes": (
+                        r"kubernetes"
+                    ),
+
+                    "Jenkins": (
+                        r"\bjenkins\b"
+                    ),
+
+                    "CI/CD": (
+                        r"ci\s*/\s*cd|continuous integration|continuous deployment"
+                    ),
+
+                    "Terraform": (
+                        r"\bterraform\b"
+                    ),
+
+                    "Ansible": (
+                        r"\bansible\b"
+                    ),
+
+                    "Linux": (
+                        r"\blinux\b|\bunix\b"
+                    ),
+
+                    "Spark": (
+                        r"\bspark\b"
+                    ),
+
+                    "Git": (
+                        r"\bgit\b|github"
+                    )
+                }
+            }
+
+            # ------------------------------------------------
+            # ROLE-SPECIFIC SKILL FILTERS
+            # ------------------------------------------------
+
+            role_skill_focus = {
+
+                "java": {
+                    "Java",
+                    "Spring Boot",
+                    "SQL",
+                    "MySQL",
+                    "PostgreSQL",
+                    "REST API",
+                    "Microservices",
+                    "Git",
+                    "Docker",
+                    "AWS",
+                    "Linux",
+                    "HTML",
+                    "CSS",
+                    "JavaScript",
+                    "MongoDB",
+                    "Jenkins",
+                    "Kubernetes"
+                },
+
+                "python": {
+                    "Python",
+                    "Django",
+                    "Flask",
+                    "FastAPI",
+                    "SQL",
+                    "MySQL",
+                    "PostgreSQL",
+                    "MongoDB",
+                    "REST API",
+                    "Git",
+                    "Docker",
+                    "AWS",
+                    "Linux"
+                },
+
+                "data analyst": {
+                    "SQL",
+                    "Excel",
+                    "Power BI",
+                    "Tableau",
+                    "Python",
+                    "Pandas",
+                    "NumPy",
+                    "Statistics",
+                    "Data Visualization",
+                    "Google Analytics",
+                    "A/B Testing"
+                },
+
+                "data engineer": {
+                    "Python",
+                    "SQL",
+                    "MySQL",
+                    "PostgreSQL",
+                    "MongoDB",
+                    "Big Data",
+                    "Hadoop",
+                    "Spark",
+                    "AWS",
+                    "Azure",
+                    "GCP",
+                    "Docker",
+                    "Git",
+                    "Linux"
+                },
+
+                "full stack": {
+                    "Java",
+                    "Python",
+                    "JavaScript",
+                    "TypeScript",
+                    "React",
+                    "Angular",
+                    "Node.js",
+                    "Express.js",
+                    "HTML",
+                    "CSS",
+                    "SQL",
+                    "MySQL",
+                    "PostgreSQL",
+                    "MongoDB",
+                    "REST API",
+                    "Git",
+                    "Docker"
+                },
+
+                "backend": {
+                    "Java",
+                    "Python",
+                    "Spring Boot",
+                    "JavaScript",
+                    "Node.js",
+                    "SQL",
+                    "MySQL",
+                    "PostgreSQL",
+                    "MongoDB",
+                    "REST API",
+                    "Microservices",
+                    "Git",
+                    "Docker",
+                    "AWS",
+                    "Linux"
+                },
+
+                "frontend": {
+                    "JavaScript",
+                    "TypeScript",
+                    "React",
+                    "Angular",
+                    "Vue.js",
+                    "HTML",
+                    "CSS",
+                    "Bootstrap",
+                    "Redux",
+                    "Git"
+                },
+
+                "devops": {
+                    "AWS",
+                    "Azure",
+                    "GCP",
+                    "Docker",
+                    "Kubernetes",
+                    "Jenkins",
+                    "CI/CD",
+                    "Terraform",
+                    "Ansible",
+                    "Linux",
+                    "Git"
+                },
+
+                "ai/ml": {
+                    "Python",
+                    "Machine Learning",
+                    "Deep Learning",
+                    "Artificial Intelligence",
+                    "TensorFlow",
+                    "PyTorch",
+                    "Keras",
+                    "Scikit-learn",
+                    "NLP",
+                    "Computer Vision",
+                    "Pandas",
+                    "NumPy"
+                }
+            }
+
+            # ------------------------------------------------
+            # FIND ROLE FOCUS
+            # ------------------------------------------------
+
+            focus_skills = None
+
+            if "java" in role_lower:
+
+                focus_skills = role_skill_focus["java"]
+
+            elif "python" in role_lower:
+
+                focus_skills = role_skill_focus["python"]
+
+            elif "data analyst" in role_lower:
+
+                focus_skills = role_skill_focus["data analyst"]
+
+            elif "data engineer" in role_lower:
+
+                focus_skills = role_skill_focus["data engineer"]
+
+            elif "full stack" in role_lower:
+
+                focus_skills = role_skill_focus["full stack"]
+
+            elif "backend" in role_lower:
+
+                focus_skills = role_skill_focus["backend"]
+
+            elif "frontend" in role_lower:
+
+                focus_skills = role_skill_focus["frontend"]
+
+            elif "devops" in role_lower:
+
+                focus_skills = role_skill_focus["devops"]
+
+            elif (
+                "ai" in role_lower
+                or "ml" in role_lower
+                or "machine learning" in role_lower
+            ):
+
+                focus_skills = role_skill_focus["ai/ml"]
+
+            # ------------------------------------------------
+            # CALCULATE SKILL DEMAND
+            # ------------------------------------------------
+
+            grouped_recommendations = {}
+
+            min_threshold = max(
+                1,
+                min(
+                    int(max(jobs_with_text, 1) * 0.05),
+                    20
+                )
             )
-        )
 
-        st.caption(
-            f"🔍 {jobs_with_text:,} of {total_matches:,} matching jobs "
-            f"have skill/description text. Showing skills mentioned in "
-            f"at least {min_threshold} of them."
-        )
+            for category, patterns in skill_categories.items():
 
-        grouped_recommendations = {}
-        
+                category_skills = []
 
-        for category, patterns in skill_categories.items():
+                for skill, pattern in patterns.items():
 
-            category_skills = []
+                    # For known roles, only show relevant skills
+                    if (
+                        focus_skills is not None
+                        and skill not in focus_skills
+                    ):
+                        continue
 
-            for skill, pattern in patterns.items():
+                    count = combined_text_series.str.contains(
+                        pattern,
+                        regex=True,
+                        na=False
+                    ).sum()
 
-                count = combined_text_series.str.contains(
-                    pattern,
-                    regex=True
-                ).sum()
-
-                if count >= min_threshold:
-
-                    category_skills.append(
-                        (skill, count)
+                    # Always show the role's main skill
+                    main_role_skill = (
+                        skill.lower() in role_lower
+                        or (
+                            "java" in role_lower
+                            and skill == "Java"
+                        )
                     )
 
-            if category_skills:
+                    if count >= min_threshold or main_role_skill:
 
-                category_skills = sorted(
-                    category_skills,
-                    key=lambda pair: pair[1],
-                    reverse=True
-                )
-
-                grouped_recommendations[category] = category_skills
-
-
-        st.subheader(
-            "🔥 Recommended Skills"
-        )
-
-
-        if grouped_recommendations:
-
-            for category, category_skills in grouped_recommendations.items():
-
-                st.markdown(f"**{category}**")
-
-                columns = st.columns(
-                    min(
-                        4,
-                        len(category_skills)
-                    )
-                )
-
-                for index, (skill, count) in enumerate(
-                    category_skills
-                ):
-
-                    with columns[
-                        index % len(columns)
-                    ]:
-
-                        st.markdown(
-                            f"""
-                            <div class="skill-card">
-                                <strong>{skill}</strong><br>
-                                <span style="font-size:12px;color:#9ca3af;">
-                                    {count}/{total_matches} jobs
-                                </span>
-                            </div>
-                            """,
-                            unsafe_allow_html=True
+                        category_skills.append(
+                            (skill, int(count))
                         )
 
-                st.write("")
+                if category_skills:
 
-        else:
+                    category_skills = sorted(
+                        category_skills,
+                        key=lambda pair: pair[1],
+                        reverse=True
+                    )
 
-            st.info(
-                "No recognized skills were found."
+                    grouped_recommendations[category] = (
+                        category_skills
+                    )
+
+            # ------------------------------------------------
+            # RECOMMENDED SKILLS
+            # ------------------------------------------------
+
+            st.divider()
+
+            st.subheader(
+                "🔥 Recommended Skills"
             )
+
+            if grouped_recommendations:
+
+                for category, category_skills in (
+                    grouped_recommendations.items()
+                ):
+
+                    st.markdown(
+                        f"**{category}**"
+                    )
+
+                    columns = st.columns(
+                        min(
+                            4,
+                            len(category_skills)
+                        )
+                    )
+
+                    for index, (skill, count) in enumerate(
+                        category_skills
+                    ):
+
+                        with columns[
+                            index % len(columns)
+                        ]:
+
+                            st.markdown(
+                                f"""
+                                <div class="skill-card">
+                                    <strong>{skill}</strong><br>
+                                    <span style="font-size:12px;color:#9ca3af;">
+                                        {count}/{total_matches} jobs
+                                    </span>
+                                </div>
+                                """,
+                                unsafe_allow_html=True
+                            )
+
+                    st.write("")
+
+            else:
+
+                st.info(
+                    "No recognized skills were found for this role."
+                )
+
             # ------------------------------------------------
-            # Matching Jobs
+            # MATCHING JOBS
             # ------------------------------------------------
+
+            st.divider()
 
             st.subheader(
                 "💼 Matching Jobs"
             )
 
+            st.write(
+                f"Jobs matching **{target_role}** based on "
+                "the job title."
+            )
 
+            # Columns to display
             show_columns = [
                 column
                 for column in [
@@ -1177,13 +1702,31 @@ elif page == "🎯 Career Skill Recommender":
                 if column in matching.columns
             ]
 
+            # Rename columns for better display
+            jobs_table = matching[
+                show_columns
+            ].head(100).copy()
+
+            jobs_table = jobs_table.rename(
+                columns={
+                    "job_title": "Job Title",
+                    "company": "Company",
+                    "location": "Location",
+                    "experience": "Experience",
+                    "salary_raw": "Salary",
+                    "source": "Source"
+                }
+            )
 
             st.dataframe(
-                matching[
-                    show_columns
-                ].head(100),
+                jobs_table,
                 use_container_width=True,
                 hide_index=True
+            )
+
+            st.caption(
+                f"Showing up to 100 of {len(matching):,} "
+                "matching job records."
             )
 
 
