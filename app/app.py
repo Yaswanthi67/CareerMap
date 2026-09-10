@@ -362,7 +362,7 @@ page = st.sidebar.radio(
         "🏠 Overview",
         "🔥 Skill Intelligence",
         "💼 Job Market",
-        "🎯 Career Recommender",
+        "🎯 Career Skill Recommender",
         "🤖 Salary Predictor",
         "🔎 Job Explorer"
     ]
