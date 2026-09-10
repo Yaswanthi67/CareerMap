@@ -965,51 +965,64 @@ elif page == "🎯 Career Skill Recommender":
            
             skill_patterns = {
 
-                "Python": r"\bpython\b",
 
-                "SQL": r"\bsql\b",
+                 "Python": r"\bpython\b",
 
-                "Excel": r"\bexcel\b",
+                 "Java": r"\bjava\b",
 
-                "Power BI": r"power\s*bi|powerbi",
+                 "JavaScript": r"\bjavascript\b|\bjs\b",
 
-                "Tableau": r"\btableau\b",
+                 "C++": r"c\+\+",
 
-                "Machine Learning":
-                    r"machine learning",
+                 "C#": r"c#",
 
-                "Deep Learning":
-                    r"deep learning",
+                 "Spring Boot": r"spring\s*boot|\bspring\b",
 
-                "Artificial Intelligence":
-                    r"artificial intelligence",
+                 "React": r"\breact\b|reactjs",
 
-                "AWS":
-                    r"\baws\b",
+                 "Node.js": r"node\.?js",
 
-                "Azure":
-                    r"\bazure\b",
+                 "Angular": r"\bangular\b",
 
-                "GCP":
-                    r"\bgcp\b|google cloud",
+                 "HTML": r"\bhtml\b",
 
-                "TensorFlow":
-                    r"tensorflow",
+                 "CSS": r"\bcss\b",
 
-                "PyTorch":
-                    r"pytorch",
+                 "REST API": r"rest\s*api|restful",
 
-                "Docker":
-                    r"docker",
+                 "Microservices": r"microservices?",
 
-                "Kubernetes":
-                    r"kubernetes",
+                 "SQL": r"\bsql\b",
 
-                "Spark":
-                    r"\bspark\b",
+                 "Excel": r"\bexcel\b",
 
-                "Git":
-                    r"\bgit\b|github"
+                 "Power BI": r"power\s*bi|powerbi",
+
+                 "Tableau": r"\btableau\b",
+
+                 "Machine Learning":r"machine learning",
+
+                 "Deep Learning":r"deep learning",
+
+                 "Artificial Intelligence":r"artificial intelligence",
+
+                 "AWS":r"\baws\b",
+
+                 "Azure":r"\bazure\b",
+
+                 "GCP":r"\bgcp\b|google cloud",
+
+                 "TensorFlow":r"tensorflow",
+
+                 "PyTorch":r"pytorch",
+
+                 "Docker":r"docker",
+
+                 "Kubernetes":r"kubernetes",
+
+                 "Spark":r"\bspark\b",
+
+                 "Git":r"\bgit\b|github"
 
             }
 
