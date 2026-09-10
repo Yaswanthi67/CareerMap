@@ -909,7 +909,7 @@ elif page == "💼 Job Market":
 # PAGE 4 — CAREER RECOMMENDER
 # ============================================================
 
-elif page == "🎯 Career Recommender":
+elif page == "🎯 Career Skill Recommender":
 
     st.title(
         "🎯 Career Skill Recommender"
