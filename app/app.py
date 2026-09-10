@@ -1059,16 +1059,28 @@ elif page == "🎯 Career Skill Recommender":
 
         }
 
+        has_text_mask = combined_text_series.str.strip().str.len() > 0
+
+        jobs_with_text = has_text_mask.sum()
 
         total_matches = len(matching)
 
         min_threshold = max(
             1,
-            int(total_matches * 0.15)
+            min(
+            int(jobs_with_text * 0.05),
+             50
+            )
+        )
+
+        st.caption(
+            f"🔍 {jobs_with_text:,} of {total_matches:,} matching jobs "
+            f"have skill/description text. Showing skills mentioned in "
+            f"at least {min_threshold} of them."
         )
 
         grouped_recommendations = {}
-
+        
 
         for category, patterns in skill_categories.items():
 
