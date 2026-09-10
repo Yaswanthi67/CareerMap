@@ -948,117 +948,157 @@ elif page == "🎯 Career Skill Recommender":
             )
 
         else:
+              st.success(
+                   f"{len(matching):,} matching job records found."
+              )
 
-            st.success(
-                f"{len(matching):,} matching job records found."
+
+        if len(matching) > 150:
+
+            st.warning(
+                "⚠️ This is a very broad search covering many "
+                "different types of roles, so skill recommendations "
+                "may be too general. Try a more specific title like "
+                "'Backend Developer', 'Frontend Developer', "
+                "'Mobile Developer', or 'DevOps Engineer' for "
+                "focused results."
             )
 
 
-            # ------------------------------------------------
-            # Extract skills
-            # ------------------------------------------------
-            text = " ".join(
-               matching["skills_raw"].fillna("").astype(str) + " " +
-               matching["description"].fillna("").astype(str) + " " +
-               matching["job_title"].fillna("").astype(str)
-            ).lower()
+        # ------------------------------------------------
+        # Extract skills
+        # ------------------------------------------------
+
+        combined_text_series = (
+            matching["skills_raw"].fillna("").astype(str) + " " +
+            matching["description"].fillna("").astype(str) + " " +
+            matching["job_title"].fillna("").astype(str)
+        ).str.lower()
            
-            skill_patterns = {
+        skill_categories = {
+
+            "Languages": {
+                "Python": r"\bpython\b",
+                "Java": r"\bjava\b",
+                "JavaScript": r"\bjavascript\b|\bjs\b",
+                "TypeScript": r"\btypescript\b",
+                "C++": r"c\+\+",
+                "C#": r"c#",
+                "PHP": r"\bphp\b",
+            },
+
+            "Frameworks": {
+                "Spring Boot": r"spring\s*boot|\bspring\b",
+                "React": r"\breact\b|reactjs",
+                "Node.js": r"node\.?js",
+                "Angular": r"\bangular\b",
+                "Vue.js": r"vue\.?js|\bvuejs\b",
+                "Express.js": r"express\.?js|\bexpressjs\b",
+                "Next.js": r"next\.?js|\bnextjs\b",
+                "Laravel": r"\blaravel\b",
+                "HTML": r"\bhtml\b",
+                "CSS": r"\bcss\b",
+                "REST API": r"rest\s*api|restful",
+                "GraphQL": r"\bgraphql\b",
+                "Redux": r"\bredux\b",
+                "Bootstrap": r"\bbootstrap\b",
+                "Microservices": r"microservices?",
+            },
+
+            "Data & Databases": {
+                "SQL": r"\bsql\b",
+                "MySQL": r"\bmysql\b",
+                "PostgreSQL": r"\bpostgresql\b|\bpostgres\b",
+                "MongoDB": r"\bmongodb\b|\bmongo\b",
+                "Excel": r"\bexcel\b",
+                "Power BI": r"power\s*bi|powerbi",
+                "Tableau": r"\btableau\b",
+            },
+
+            "AI / ML": {
+                "Machine Learning": r"machine learning",
+                "Deep Learning": r"deep learning",
+                "Artificial Intelligence": r"artificial intelligence",
+                "TensorFlow": r"tensorflow",
+                "PyTorch": r"pytorch",
+            },
+
+            "Cloud & DevOps": {
+                "AWS": r"\baws\b",
+                "Azure": r"\bazure\b",
+                "GCP": r"\bgcp\b|google cloud",
+                "Docker": r"docker",
+                "Kubernetes": r"kubernetes",
+                "Jenkins": r"\bjenkins\b",
+                "CI/CD": r"ci\s*/\s*cd|continuous integration|continuous deployment",
+                "Terraform": r"\bterraform\b",
+                "Ansible": r"\bansible\b",
+                "Linux": r"\blinux\b|\bunix\b",
+                "Spark": r"\bspark\b",
+                "Git": r"\bgit\b|github",
+            },
+
+        }
 
 
-                 "Python": r"\bpython\b",
+        total_matches = len(matching)
 
-                 "Java": r"\bjava\b",
+        min_threshold = max(
+            1,
+            int(total_matches * 0.15)
+        )
 
-                 "JavaScript": r"\bjavascript\b|\bjs\b",
-
-                 "C++": r"c\+\+",
-
-                 "C#": r"c#",
-
-                 "Spring Boot": r"spring\s*boot|\bspring\b",
-
-                 "React": r"\breact\b|reactjs",
-
-                 "Node.js": r"node\.?js",
-
-                 "Angular": r"\bangular\b",
-
-                 "HTML": r"\bhtml\b",
-
-                 "CSS": r"\bcss\b",
-
-                 "REST API": r"rest\s*api|restful",
-
-                 "Microservices": r"microservices?",
-
-                 "SQL": r"\bsql\b",
-
-                 "Excel": r"\bexcel\b",
-
-                 "Power BI": r"power\s*bi|powerbi",
-
-                 "Tableau": r"\btableau\b",
-
-                 "Machine Learning":r"machine learning",
-
-                 "Deep Learning":r"deep learning",
-
-                 "Artificial Intelligence":r"artificial intelligence",
-
-                 "AWS":r"\baws\b",
-
-                 "Azure":r"\bazure\b",
-
-                 "GCP":r"\bgcp\b|google cloud",
-
-                 "TensorFlow":r"tensorflow",
-
-                 "PyTorch":r"pytorch",
-
-                 "Docker":r"docker",
-
-                 "Kubernetes":r"kubernetes",
-
-                 "Spark":r"\bspark\b",
-
-                 "Git":r"\bgit\b|github"
-
-            }
+        grouped_recommendations = {}
 
 
-            recommendations = []
+        for category, patterns in skill_categories.items():
 
+            category_skills = []
 
-            for skill, pattern in skill_patterns.items():
+            for skill, pattern in patterns.items():
 
-                if re.search(
+                count = combined_text_series.str.contains(
                     pattern,
-                    text
-                ):
+                    regex=True
+                ).sum()
 
-                    recommendations.append(
-                        skill
+                if count >= min_threshold:
+
+                    category_skills.append(
+                        (skill, count)
                     )
 
+            if category_skills:
 
-            st.subheader(
-                "🔥 Recommended Skills"
-            )
+                category_skills = sorted(
+                    category_skills,
+                    key=lambda pair: pair[1],
+                    reverse=True
+                )
+
+                grouped_recommendations[category] = category_skills
 
 
-            if recommendations:
+        st.subheader(
+            "🔥 Recommended Skills"
+        )
+
+
+        if grouped_recommendations:
+
+            for category, category_skills in grouped_recommendations.items():
+
+                st.markdown(f"**{category}**")
 
                 columns = st.columns(
                     min(
                         4,
-                        len(recommendations)
+                        len(category_skills)
                     )
                 )
 
-
-                for index, skill in enumerate(
-                    recommendations
+                for index, (skill, count) in enumerate(
+                    category_skills
                 ):
 
                     with columns[
@@ -1068,19 +1108,22 @@ elif page == "🎯 Career Skill Recommender":
                         st.markdown(
                             f"""
                             <div class="skill-card">
-                                <strong>{skill}</strong>
+                                <strong>{skill}</strong><br>
+                                <span style="font-size:12px;color:#9ca3af;">
+                                    {count}/{total_matches} jobs
+                                </span>
                             </div>
                             """,
                             unsafe_allow_html=True
                         )
 
-            else:
+                st.write("")
 
-                st.info(
-                    "No recognized skills were found."
-                )
+        else:
 
-
+            st.info(
+                "No recognized skills were found."
+            )
             # ------------------------------------------------
             # Matching Jobs
             # ------------------------------------------------
