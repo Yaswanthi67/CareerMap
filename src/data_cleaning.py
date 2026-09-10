@@ -146,7 +146,8 @@ def process_joba():
 
     company_col = find_column(
         df,
-        ["company", "company_name", "employer"]
+        ["company", "company_name", "employer",
+         "company_size", "company_industry"]
     )
 
     country_col = find_column(
@@ -174,6 +175,75 @@ def process_joba():
         ["description", "job_description"]
     )
 
+    # ---------------------------------------------------
+    # JOBA stores skills as separate flag columns
+    # (skills_python, skills_sql, skills_ml, etc.)
+    # instead of one combined text column. Combine them.
+    # ---------------------------------------------------
+
+    skill_flag_columns = {
+        "skills_python": "Python",
+        "skills_sql": "SQL",
+        "skills_ml": "Machine Learning",
+        "skills_deep_learning": "Deep Learning",
+        "skills_cloud": "Cloud",
+    }
+
+    present_flag_columns = {
+        col: name
+        for col, name in skill_flag_columns.items()
+        if col in df.columns
+    }
+
+    def row_skills_from_flags(row):
+
+        matched = []
+
+        for col, skill_name in present_flag_columns.items():
+
+            value = str(row[col]).strip().lower()
+
+            if value in ("1", "1.0", "true", "yes", "y"):
+                matched.append(skill_name)
+
+        return " ".join(matched)
+
+    print("JOBA -> present_flag_columns:", present_flag_columns)
+
+    if present_flag_columns:
+
+        flags_skills_series = df.apply(
+            row_skills_from_flags,
+            axis=1
+        )
+
+    else:
+
+        flags_skills_series = pd.Series(
+            [""] * len(df)
+        )
+
+    non_empty_flags = (
+        flags_skills_series
+        .astype(str)
+        .str.strip()
+        .str.len()
+        .gt(0)
+        .sum()
+    )
+
+    print(f"JOBA -> rows with skills from flags: {non_empty_flags} / {len(df)}")
+    explicit_skills_series = (
+        df[skills_col].astype(str)
+        if skills_col else ""
+    )
+
+    combined_skills_series = (
+        explicit_skills_series.astype(str)
+        + " "
+        + flags_skills_series.astype(str)
+    ) if skills_col else flags_skills_series
+
     result = pd.DataFrame()
 
     result["job_title"] = (
@@ -196,9 +266,7 @@ def process_joba():
         df[experience_col] if experience_col else ""
     )
 
-    result["skills_raw"] = (
-        df[skills_col] if skills_col else ""
-    )
+    result["skills_raw"] = combined_skills_series
 
     result["description"] = (
         df[description_col] if description_col else ""
@@ -249,7 +317,7 @@ def process_indian():
 
     skills_col = find_column(
         df,
-        ["skills", "required_skills", "skill"]
+        ["skills", "required_skills", "skill","skills_required"]
     )
 
     description_col = find_column(
