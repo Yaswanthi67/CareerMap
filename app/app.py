@@ -948,9 +948,9 @@ elif page == "🎯 Career Skill Recommender":
             )
 
         else:
-              st.success(
-                   f"{len(matching):,} matching job records found."
-              )
+                     st.success(
+            f"{len(matching):,} matching job records found."
+        )
 
 
         if len(matching) > 150:
@@ -959,9 +959,8 @@ elif page == "🎯 Career Skill Recommender":
                 "⚠️ This is a very broad search covering many "
                 "different types of roles, so skill recommendations "
                 "may be too general. Try a more specific title like "
-                "'Backend Developer', 'Frontend Developer', "
-                "'Mobile Developer', or 'DevOps Engineer' for "
-                "focused results."
+                "'Backend Developer', 'Data Analyst', or "
+                "'DevOps Engineer' for focused results."
             )
 
 
@@ -974,7 +973,8 @@ elif page == "🎯 Career Skill Recommender":
             matching["description"].fillna("").astype(str) + " " +
             matching["job_title"].fillna("").astype(str)
         ).str.lower()
-           
+
+
         skill_categories = {
 
             "Languages": {
@@ -1013,6 +1013,9 @@ elif page == "🎯 Career Skill Recommender":
                 "Excel": r"\bexcel\b",
                 "Power BI": r"power\s*bi|powerbi",
                 "Tableau": r"\btableau\b",
+                "Looker": r"\blooker\b",
+                "VBA": r"\bvba\b",
+                "Google Analytics": r"google analytics",
             },
 
             "AI / ML": {
@@ -1021,6 +1024,22 @@ elif page == "🎯 Career Skill Recommender":
                 "Artificial Intelligence": r"artificial intelligence",
                 "TensorFlow": r"tensorflow",
                 "PyTorch": r"pytorch",
+                "Keras": r"\bkeras\b",
+                "Scikit-learn": r"scikit[-\s]?learn|\bsklearn\b",
+                "NLP": r"\bnlp\b|natural language processing",
+                "Computer Vision": r"computer vision",
+            },
+
+            "Statistics & Analytics": {
+                "Statistics": r"\bstatistics\b|\bstatistical\b",
+                "Data Visualization": r"data visuali[sz]ation",
+                "A/B Testing": r"a/b\s*testing|ab\s*testing",
+                "Pandas": r"\bpandas\b",
+                "NumPy": r"\bnumpy\b",
+                "SAS": r"\bsas\b",
+                "Big Data": r"big data",
+                "Hadoop": r"\bhadoop\b",
+                "Jupyter": r"\bjupyter\b",
             },
 
             "Cloud & DevOps": {
